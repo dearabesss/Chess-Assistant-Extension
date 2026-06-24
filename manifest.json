@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Chess Assistant",
+  "version": "1.0",
+  "description": "Chess Assistant",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.chess.com/*",
+    "*://*.lichess.org/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Small Window"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.chess.com/*",
+        "*://*.lichess.org/*"
+      ],
+      "js": ["content.js"]
+    }
+  ]
+}
