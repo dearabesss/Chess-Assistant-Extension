@@ -27,7 +27,7 @@ Whether you're studying games, reviewing positions, or improving your chess skil
 Clone or download this repository:
 
 ```bash
-git clone https://github.com/yourusername/chess-assistant.git
+git clone https://github.com/dearabesss/chess-assistant.git
 ```
 
 ### 2. Open Chrome Extensions
