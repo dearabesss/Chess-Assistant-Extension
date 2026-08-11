@@ -124,7 +124,7 @@ function processGrid(grid) {
     }
 
     if (currentFen.includes('K') && currentFen.includes('k')) {
-        // FIX: Calculate turn logic ONLY if the board actually changed
+
         if (currentFen !== lastFen) {
             if (lastGrid) {
                 let whiteArrived = false;
@@ -147,11 +147,11 @@ function processGrid(grid) {
             lastFen = currentFen;
         }
         
-        // FIX: ALWAYS broadcast the state so the Side Panel catches up instantly
+
         try {
             chrome.runtime.sendMessage({ type: "FEN_UPDATE", fen: currentFen, turn: currentTurn }).catch(() => {});
         } catch(err) {
-            // Ignore background context errors if panel is closed
+
         }
     }
 }
