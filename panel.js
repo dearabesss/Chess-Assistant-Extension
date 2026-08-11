@@ -12,7 +12,6 @@ const pieceImages = {
     'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg', 'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg', 'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg', 'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg', 'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg', 'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
 };
 
-
 let isMyTurn = false; 
 let isFirstLoad = true;
 let latestFen = "8/8/8/8/8/8/8/8";
@@ -68,19 +67,17 @@ function triggerCalculation() {
     stockfish.postMessage("go depth 12");
 }
 
-
 syncBtn.addEventListener('click', () => {
     isMyTurn = true; 
     triggerCalculation();
 });
 
-
 colorSelector.addEventListener('change', () => {
     isFirstLoad = true;
     isMyTurn = colorSelector.value === 'w'; 
-    renderBoard("8/8/8/8/8/8/8/8");
+    renderBoard(latestFen);
     document.querySelectorAll('.highlight-move').forEach(el => el.classList.remove('highlight-move'));
-    moveDisplay.innerText = "Waiting for game...";
+    moveDisplay.innerText = "Flipping board...";
 });
 
 stockfish.onmessage = function(event) {
@@ -98,32 +95,33 @@ let calcTimer = null;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "FEN_UPDATE") {
-        try { renderBoard(message.fen); } catch (error) { return; }
-        latestFen = message.fen;
-        
-        if (message.turn === colorSelector.value) {
-        
-            clearTimeout(calcTimer);
+        if (message.fen !== latestFen || isFirstLoad) {
+            isFirstLoad = false;
+            latestFen = message.fen;
             
+            try { renderBoard(latestFen); } catch (error) { return; }
             
-            stockfish.postMessage("stop"); 
-            
-            moveDisplay.innerText = "Locking in move...";
-            moveDisplay.style.color = "#888"; 
-            
-         
-            calcTimer = setTimeout(() => {
-                triggerCalculation();
-            }, 300);
-            
-        } else {
-            clearTimeout(calcTimer);
-            stockfish.postMessage("stop"); 
-            
-            moveDisplay.innerText = "Opponent is thinking...";
-            moveDisplay.style.color = "#888"; 
-            document.querySelectorAll('.highlight-move').forEach(el => el.classList.remove('highlight-move'));
+            if (message.turn === colorSelector.value) {
+                clearTimeout(calcTimer);
+                stockfish.postMessage("stop"); 
+                
+                moveDisplay.innerText = "Locking in move...";
+                moveDisplay.style.color = "#888"; 
+             
+                calcTimer = setTimeout(() => {
+                    triggerCalculation();
+                }, 300);
+                
+            } else {
+                clearTimeout(calcTimer);
+                stockfish.postMessage("stop"); 
+                
+                moveDisplay.innerText = "Opponent is thinking...";
+                moveDisplay.style.color = "#888"; 
+                document.querySelectorAll('.highlight-move').forEach(el => el.classList.remove('highlight-move'));
+            }
         }
     }
 });
+
 renderBoard("8/8/8/8/8/8/8/8");
