@@ -1,8 +1,6 @@
-
 let lastFen = "";
 let lastGrid = null;
 let currentTurn = 'w';
-
 
 const chessComMap = {
     'wp': 'P', 'wr': 'R', 'wn': 'N', 'wb': 'B', 'wq': 'Q', 'wk': 'K',
@@ -14,7 +12,6 @@ const lichessMap = {
     'black pawn': 'p', 'black rook': 'r', 'black knight': 'n', 'black bishop': 'b', 'black queen': 'q', 'black king': 'k'
 };
 
-// 1. Master Router
 function readBoard() {
     if (window.location.hostname.includes("chess.com")) {
         scanChessCom();
@@ -22,7 +19,6 @@ function readBoard() {
         scanLichess();
     }
 }
-
 
 function scanChessCom() {
     let pieces = document.querySelectorAll('.piece');
@@ -51,7 +47,6 @@ function scanChessCom() {
     processGrid(grid);
 }
 
-
 function scanLichess() {
     let board = document.querySelector('cg-board');
     let wrap = document.querySelector('.cg-wrap');
@@ -77,7 +72,6 @@ function scanLichess() {
         let colorType = p.className;
         let pieceChar = null;
         
-        
         for (let key in lichessMap) {
             let [color, type] = key.split(' ');
             if (colorType.includes(color) && colorType.includes(type)) {
@@ -90,18 +84,15 @@ function scanLichess() {
         let transform = p.style.transform;
         if (!transform) return;
 
-        // Lichess uses X,Y translations to place pieces
         let match = transform.match(/translate\(([\d.-]+)(px|%),\s*([\d.-]+)(px|%)\)/);
         if (match) {
             let x = parseFloat(match[1]);
             let xUnit = match[2];
             let y = parseFloat(match[3]);
             let yUnit = match[4];
-
             
             let col = xUnit === '%' ? Math.round(x / 100) : Math.round(x / sqWidth);
             let row = yUnit === '%' ? Math.round(y / 100) : Math.round(y / sqHeight);
-
             
             if (isBlackBottom) {
                 col = 7 - col;
@@ -116,7 +107,6 @@ function scanLichess() {
 
     processGrid(grid);
 }
-
 
 function processGrid(grid) {
     let currentFen = "";
@@ -133,29 +123,37 @@ function processGrid(grid) {
         if (r < 7) currentFen += "/";
     }
 
-    if (currentFen !== lastFen && currentFen.includes('K') && currentFen.includes('k')) {
-        if (lastGrid) {
-            let whiteArrived = false;
-            let blackArrived = false;
+    if (currentFen.includes('K') && currentFen.includes('k')) {
+        // FIX: Calculate turn logic ONLY if the board actually changed
+        if (currentFen !== lastFen) {
+            if (lastGrid) {
+                let whiteArrived = false;
+                let blackArrived = false;
 
-            for (let r = 0; r < 8; r++) {
-                for (let c = 0; c < 8; c++) {
-                    if (grid[r][c] !== lastGrid[r][c] && grid[r][c] !== "") {
-                        let p = grid[r][c];
-                        if (p === p.toUpperCase()) whiteArrived = true;
-                        if (p === p.toLowerCase()) blackArrived = true;
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        if (grid[r][c] !== lastGrid[r][c] && grid[r][c] !== "") {
+                            let p = grid[r][c];
+                            if (p === p.toUpperCase()) whiteArrived = true;
+                            if (p === p.toLowerCase()) blackArrived = true;
+                        }
                     }
                 }
+                if (whiteArrived && !blackArrived) currentTurn = 'b';
+                else if (blackArrived && !whiteArrived) currentTurn = 'w';
             }
-            if (whiteArrived && !blackArrived) currentTurn = 'b';
-            else if (blackArrived && !whiteArrived) currentTurn = 'w';
+            
+            lastGrid = grid.map(row => [...row]); 
+            lastFen = currentFen;
         }
         
-        lastGrid = grid.map(row => [...row]); 
-        lastFen = currentFen;
-        chrome.runtime.sendMessage({ type: "FEN_UPDATE", fen: currentFen, turn: currentTurn });
+        // FIX: ALWAYS broadcast the state so the Side Panel catches up instantly
+        try {
+            chrome.runtime.sendMessage({ type: "FEN_UPDATE", fen: currentFen, turn: currentTurn }).catch(() => {});
+        } catch(err) {
+            // Ignore background context errors if panel is closed
+        }
     }
 }
-
 
 setInterval(readBoard, 500);
