@@ -59,7 +59,7 @@ Open Chess.com or Lichess and start analyzing positions instantly.
 | Chess.com | ✅ |
 | Lichess | ✅ |
 
----
+
 
 ## 🧠 Engine
 
@@ -72,7 +72,7 @@ Stockfish analyzes board positions and provides:
 - Deep strategic analysis
 - Accurate engine calculations
 
----
+
 
 ## 📷 Screenshots
 
